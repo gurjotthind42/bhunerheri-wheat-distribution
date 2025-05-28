@@ -14,4 +14,4 @@ async def startup_event():
 
 @app.get("/api/wheat")
 def fetch_data():
-    return get_wheat_data()
+     return get_all_fps_data()
