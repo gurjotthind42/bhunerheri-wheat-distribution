@@ -12,19 +12,24 @@ def fetch_wheat_data(fps_id):
         "month": CYCLE_MONTH,
         "year": CYCLE_YEAR
     }
-    res = requests.post("https://epos.punjab.gov.in/FPS_Stock.jsp", data=payload)
-    soup = BeautifulSoup(res.text, "html.parser")
-    rows = soup.find_all("tr")
-    for row in rows:
-        cols = row.find_all("td")
-        if len(cols) >= 10 and "Wheat" in cols[1].text.strip():
-            return {
-                "fps_id": str(fps_id),
-                "allocation": float(cols[3].text.strip()),
-                "received": float(cols[5].text.strip()),
-                "issued": float(cols[8].text.strip()),
-                "cb": float(cols[9].text.strip())
-            }
+
+    try:
+        res = requests.post("https://epos.punjab.gov.in/FPS_Stock.jsp", data=payload)
+        soup = BeautifulSoup(res.text, "html.parser")
+        rows = soup.find_all("tr")
+        for row in rows:
+            cols = row.find_all("td")
+            if len(cols) >= 10 and cols[1].text.strip().lower() == "wheat":
+                return {
+                    "fps_id": str(fps_id),
+                    "allocation": float(cols[3].text.strip() or 0),
+                    "received": float(cols[5].text.strip() or 0),
+                    "issued": float(cols[8].text.strip() or 0),
+                    "cb": float(cols[9].text.strip() or 0)
+                }
+    except Exception as e:
+        print(f"Error fetching data for FPS {fps_id}: {e}")
+    
     return None
 
 def refresh_fps_data():
@@ -38,20 +43,5 @@ def update_yesterday_distributions():
     update_yesterday()
 
 def get_all_fps_data():
-    results = []
-
-    for fps_id in FPS_IDS:
-        data = fetch_wheat_data(fps_id)
-        if data:
-            # Add dummy values for now
-            data["yesterday_issued"] = data["issued"] - 5  # you can make this dynamic later
-            data["today_distribution"] = 5  # just a test
-            data["distribution_percentage"] = (
-                round((data["issued"] / data["allocation"]) * 100, 2)
-                if data["allocation"] > 0 else 0.0
-            )
-            data["updated_on"] = "2025-05-28T00:00:00"
-            results.append(data)
-
-    return results
-
+    from database import get_wheat_data
+    return get_wheat_data()
