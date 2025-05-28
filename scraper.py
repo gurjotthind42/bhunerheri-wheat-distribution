@@ -38,5 +38,20 @@ def update_yesterday_distributions():
     update_yesterday()
 
 def get_all_fps_data():
-    from database import get_wheat_data
-    return get_wheat_data()
+    results = []
+
+    for fps_id in FPS_IDS:
+        data = fetch_wheat_data(fps_id)
+        if data:
+            # Add dummy values for now
+            data["yesterday_issued"] = data["issued"] - 5  # you can make this dynamic later
+            data["today_distribution"] = 5  # just a test
+            data["distribution_percentage"] = (
+                round((data["issued"] / data["allocation"]) * 100, 2)
+                if data["allocation"] > 0 else 0.0
+            )
+            data["updated_on"] = "2025-05-28T00:00:00"
+            results.append(data)
+
+    return results
+
